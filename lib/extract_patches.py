@@ -31,39 +31,28 @@ def load_file_path_txt(file_path):
 # Load the original image, grroundtruth and FOV of the data set in order, and check the dimensions
 def load_data(data_path_list_file):
     print('\033[0;33mload data from {} \033[0m'.format(data_path_list_file))
-    img_list, gt_list, fov_list = load_file_path_txt(data_path_list_file)
+    img_list, gt_list = load_file_path_txt(data_path_list_file)
     imgs = None
     groundTruth = None
-    FOVs = None
     for i in range(len(img_list)):
         img = np.asarray(readImg(img_list[i]))
         gt = np.asarray(readImg(gt_list[i]))
         if len(gt.shape)==3:
             gt = gt[:,:,0]
-        fov = np.asarray(readImg(fov_list[i]))
-        if len(fov.shape)==3:
-            fov = fov[:,:,0]
 
         imgs = np.expand_dims(img,0) if imgs is None else np.concatenate((imgs,np.expand_dims(img,0)))
         groundTruth = np.expand_dims(gt,0) if groundTruth is None else np.concatenate((groundTruth,np.expand_dims(gt,0)))
-        FOVs = np.expand_dims(fov,0) if FOVs is None else np.concatenate((FOVs,np.expand_dims(fov,0)))
     
-    assert(np.min(FOVs)==0 and np.max(FOVs)==255)
-    assert((np.min(groundTruth)==0 and (np.max(groundTruth)==255 or np.max(groundTruth)==1))) # CHASE_DB1数据集GT图像为单通道二值（0和1）图像
-    if np.max(groundTruth)==1:
-        print("\033[0;31m Single channel binary image is multiplied by 255 \033[0m")
-        groundTruth = groundTruth * 255
+    # assert((np.min(groundTruth)==0 and (np.max(groundTruth)==255 or np.max(groundTruth)==1))) # CHASE_DB1数据集GT图像为单通道二值（0和1）图像
+    # if np.max(groundTruth)==1:
+    #     print("\033[0;31m Single channel binary image is multiplied by 255 \033[0m")
+    #     groundTruth = groundTruth * 255
 
     #Convert the dimension of imgs to [N,C,H,W]
     imgs = np.transpose(imgs,(0,3,1,2))
     groundTruth = np.expand_dims(groundTruth,1)
-    FOVs = np.expand_dims(FOVs,1)
-    print('ori data shape < ori_imgs:{} GTs:{} FOVs:{}'.format(imgs.shape,groundTruth.shape,FOVs.shape))
-    print("imgs pixel range %s-%s: " %(str(np.min(imgs)),str(np.max(imgs))))
-    print("GTs pixel range %s-%s: " %(str(np.min(groundTruth)),str(np.max(groundTruth))))
-    print("FOVs pixel range %s-%s: " %(str(np.min(FOVs)),str(np.max(FOVs))))
     print("==================data have loaded======================")
-    return imgs, groundTruth, FOVs
+    return imgs, groundTruth
 
 #==============================Load train data==============================================
 #Load the original data and return the extracted patches for training

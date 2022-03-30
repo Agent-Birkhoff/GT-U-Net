@@ -9,8 +9,8 @@ import numpy as np
 from PIL import Image
 from os.path import join
 
-def get_path_list(root_path,img_path,label_path,fov_path):
-    tmp_list = [img_path,label_path,fov_path]
+def get_path_list(root_path,img_path,label_path):
+    tmp_list = [img_path,label_path]
     res = []
     for i in range(len(tmp_list)):
         data_path = join(data_root_path,tmp_list[i])
