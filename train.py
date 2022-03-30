@@ -63,7 +63,7 @@ def main():
         args.start_epoch = checkpoint["epoch"] + 1
 
     train_loader, val_loader = get_dataloaderV3(
-        "./datasets/spine", args
+        "./data_path_list/dataset.txt", args
     )  # create dataloader
 
     if args.val_on_test:
