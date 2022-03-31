@@ -28,7 +28,7 @@ def main():
     sys.stdout = Print_Logger(os.path.join(save_path, "train_log.txt"))
     print("The computing device used is: ", "GPU" if device.type == "cuda" else "CPU")
 
-    net = models.GT_UNet.GT_U_Net(1, 2).to(device)
+    net = models.GT_UNet.GT_U_Net(1, 1).to(device)
 
     ngpu = 1
     if ngpu > 1:
@@ -61,7 +61,7 @@ def main():
         net.load_state_dict(checkpoint["net"])
         optimizer.load_state_dict(checkpoint["optimizer"])
         args.start_epoch = checkpoint["epoch"] + 1
-
+        
     train_loader, val_loader = get_dataloaderV3(
         "./data_path_list/dataset.txt", args
     )  # create dataloader

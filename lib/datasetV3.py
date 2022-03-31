@@ -7,17 +7,15 @@ from .extract_patches import load_data
 
 
 class TrainDatasetV3(Dataset):
-    def split(self, imgs):
-        ratio = 0.2
-
-        val_idx = np.random.choice(len(imgs), replace=True, p=ratio)
-        train_idx = np.delete(np.arange(len(imgs)), val_idx)
+    def split(self, ratio=0.2):
+        self.val_idx = np.random.choice(
+            len(self.imgs), size=int(len(self.imgs) * ratio), replace=True
+        )
+        self.train_idx = np.delete(np.arange(len(self.imgs)), self.val_idx)
 
         # shuffle
-        np.random.shuffle(train_idx)
-        np.random.shuffle(val_idx)
-
-        return imgs[train_idx], imgs[val_idx]
+        np.random.shuffle(self.train_idx)
+        np.random.shuffle(self.val_idx)
 
     def __init__(self, data_path_list_file, mode, args):
         self.imgs, self.gts = load_data(data_path_list_file)
@@ -25,20 +23,20 @@ class TrainDatasetV3(Dataset):
         self.transforms = Compose(
             [RandomFlip_LR(prob=0.5), RandomFlip_UD(prob=0.5), RandomRotate()]
         )
-        self.train, self.val = self.split(self.imgs)
+        self.split()
 
     def __len__(self):
         if self.mode == "train":
-            return len(self.train)
+            return len(self.train_idx)
         else:
-            return len(self.val)
+            return len(self.val_idx)
 
     def __getitem__(self, idx):
         if self.mode == "train":
-            img = self.train[idx]
-        else:
-            img = self.val[idx]
-        gt = self.gts[idx]
-        if self.mode == "train":
+            img = self.imgs[self.train_idx[idx]]
+            gt = self.gts[self.train_idx[idx]]
             img, gt = self.transforms(img, gt)
-        return img, gt
+        else:
+            img = self.imgs[self.val_idx[idx]]
+            gt = self.gts[self.val_idx[idx]]
+        return img / 255, gt / 255

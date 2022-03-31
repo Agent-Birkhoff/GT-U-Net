@@ -3,6 +3,7 @@ This part mainly contains functions related to extracting image patches.
 The image patches are randomly extracted in the fov(optional) during the training phase, 
 and the test phase needs to be spliced after splitting
 """
+import torch
 import numpy as np
 import random
 import configparser
@@ -16,17 +17,15 @@ from .pre_processing import my_PreProc
 def load_file_path_txt(file_path):
     img_list = []
     gt_list = []
-    fov_list = []
     with open(file_path, 'r') as file_to_read:
         while True:
             lines = file_to_read.readline().strip()  # read a line
             if not lines:
                 break
-            img,gt,fov = lines.split(' ')
+            img,gt= lines.split(' ')
             img_list.append(img)
             gt_list.append(gt)
-            fov_list.append(fov)
-    return img_list,gt_list,fov_list
+    return img_list,gt_list
 
 # Load the original image, grroundtruth and FOV of the data set in order, and check the dimensions
 def load_data(data_path_list_file):
@@ -35,8 +34,8 @@ def load_data(data_path_list_file):
     imgs = None
     groundTruth = None
     for i in range(len(img_list)):
-        img = np.asarray(readImg(img_list[i]))
-        gt = np.asarray(readImg(gt_list[i]))
+        img = np.expand_dims(np.asarray(readImg(img_list[i])), axis = 2)
+        gt = np.expand_dims(np.asarray(readImg(gt_list[i])), axis = 2)
         if len(gt.shape)==3:
             gt = gt[:,:,0]
 
@@ -47,12 +46,12 @@ def load_data(data_path_list_file):
     # if np.max(groundTruth)==1:
     #     print("\033[0;31m Single channel binary image is multiplied by 255 \033[0m")
     #     groundTruth = groundTruth * 255
-
+    
     #Convert the dimension of imgs to [N,C,H,W]
-    imgs = np.transpose(imgs,(0,3,1,2))
-    groundTruth = np.expand_dims(groundTruth,1)
+    imgs = torch.from_numpy(np.transpose(imgs,(0,3,1,2)))
+    groundTruth = torch.from_numpy(np.expand_dims(groundTruth,1))
     print("==================data have loaded======================")
-    return imgs, groundTruth
+    return imgs.float(), groundTruth.float()
 
 #==============================Load train data==============================================
 #Load the original data and return the extracted patches for training
