@@ -221,7 +221,7 @@ def val(val_loader, net, criterion, device):
 
             outputs = outputs.data.cpu().numpy()
             targets = targets.data.cpu().numpy()
-            evaluater.add_batch(targets, outputs[:, 1])
+            evaluater.add_batch(targets, outputs)
     log = OrderedDict(
         [
             ("val_loss", val_loss.avg),
