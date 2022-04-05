@@ -1,19 +1,21 @@
 import random
+from collections import OrderedDict
 from os.path import join
-from lib.extract_patches import get_data_train
-from lib.losses.loss import *
-from lib.visualize import group_images, save_img
+
+import torch
+from torch.cuda.amp.autocast_mode import autocast
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+
 from lib.common import *
 from lib.dataset import TrainDataset
-from torch.utils.data import DataLoader
-from collections import OrderedDict
+from lib.datasetV2 import TrainDatasetV2, create_patch_idx, data_preprocess
+from lib.datasetV3 import TrainDatasetV3
+from lib.extract_patches import get_data_train
+from lib.losses.loss import *
 from lib.metrics import Evaluate
 from lib.visualize import group_images, save_img
-from lib.extract_patches import get_data_train
-from lib.datasetV2 import data_preprocess, create_patch_idx, TrainDatasetV2
-from lib.datasetV3 import TrainDatasetV3
-from tqdm import tqdm
-import torch
+
 
 # ========================get dataloader==============================
 def get_dataloader(args):
@@ -177,7 +179,7 @@ def get_dataloaderV3(path, args):
 
 
 # =======================train========================
-def train(train_loader, net, criterion, optimizer, device):
+def train(train_loader, net, criterion, optimizer, device, scaler=None):
     net.train()
     train_loss = AverageMeter()
 
@@ -187,14 +189,26 @@ def train(train_loader, net, criterion, optimizer, device):
         inputs, targets = inputs.to(device), targets.to(device)
         optimizer.zero_grad()
 
-        outputs = net(inputs)
-        output = torch.sigmoid(outputs)
+        if scaler is not None:
+            with autocast():
+                outputs = net(inputs)
+                output = torch.sigmoid(outputs)
+                # output = output.view(output.size(0), -1).float()
+                # target = targets.view(targets.size(0), -1).float()
+                loss = criterion(output, targets)
 
-        # output = output.view(output.size(0), -1).float()
-        # target = targets.view(targets.size(0), -1).float()
-        loss = criterion(output, targets)
-        loss.backward()
-        optimizer.step()
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
+        else:
+            outputs = net(inputs)
+            output = torch.sigmoid(outputs)
+            # output = output.view(output.size(0), -1).float()
+            # target = targets.view(targets.size(0), -1).float()
+            loss = criterion(output, targets)
+
+            loss.backward()
+            optimizer.step()
 
         train_loss.update(loss.item(), inputs.size(0))
     log = OrderedDict([("train_loss", train_loss.avg)])

@@ -6,6 +6,7 @@ from test import Test
 import torch
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
+from torch.cuda.amp.grad_scaler import GradScaler
 
 import models
 from config import parse_args
@@ -15,7 +16,7 @@ from lib.logger import Logger, Print_Logger
 from lib.losses.loss import *
 
 
-def main():
+def main(use_amp=True):
     setpu_seed(2021)
     args = parse_args()
     save_path = join(args.outf, args.save)
@@ -53,6 +54,11 @@ def main():
         optimizer, T_max=args.N_epochs, eta_min=0
     )
 
+    if use_amp is True:
+        scaler = GradScaler()
+    else:
+        scaler = None
+
     # The training speed of this task is fast, so pre training is not recommended
     if args.pre_trained is not None:
         # Load checkpoint.
@@ -61,7 +67,7 @@ def main():
         net.load_state_dict(checkpoint["net"])
         optimizer.load_state_dict(checkpoint["optimizer"])
         args.start_epoch = checkpoint["epoch"] + 1
-        
+
     train_loader, val_loader = get_dataloaderV3(
         "./data_path_list/dataset.txt", args
     )  # create dataloader
@@ -89,7 +95,9 @@ def main():
         )
 
         # train stage
-        train_log = train(train_loader, net, criterion, optimizer, device)
+        train_log = train(
+            train_loader, net, criterion, optimizer, device, scaler=scaler
+        )
         # val stage
         if args.val_on_test and val_tool is not None:
             val_tool.inference(net)
