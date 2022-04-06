@@ -1,20 +1,17 @@
-import argparse
-import copy
 import os
 import sys
 from collections import OrderedDict
 from os.path import join
 
-import joblib
 import torch
 import torch.backends.cudnn as cudnn
-from torch.utils.data import DataLoader
+from torch.nn.parallel import DataParallel
+from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
 import models
 from config import parse_args
 from lib.common import dict_round, setpu_seed
-from lib.dataset import TestDataset
 from lib.extract_patches import *
 from lib.logger import Logger, Print_Logger
 from lib.metrics import Evaluate
@@ -22,6 +19,19 @@ from lib.pre_processing import my_PreProc
 from lib.visualize import concat_result, group_images, save_img
 
 setpu_seed(2021)
+
+
+class TestDataset(Dataset):
+    """Endovis 2018 dataset."""
+
+    def __init__(self, patches_imgs):
+        self.imgs = patches_imgs
+
+    def __len__(self):
+        return self.imgs.shape[0]
+
+    def __getitem__(self, idx):
+        return torch.from_numpy(self.imgs[idx, ...]).float()
 
 
 class Test:
@@ -99,7 +109,7 @@ class Test:
 
     # save segmentation imgs
     def save_segmentation_result(self):
-        img_path_list, _, _ = load_file_path_txt(self.args.test_data_path_list)
+        img_path_list, _ = load_file_path_txt(self.args.test_data_path_list)
         img_name_list = [item.split("/")[-1].split(".")[0] for item in img_path_list]
 
         kill_border(self.pred_imgs, self.test_FOVs)  # only for visualization
@@ -163,7 +173,7 @@ if __name__ == "__main__":
     cudnn.benchmark = True
     ngpu = 1
     if ngpu > 1:
-        net = torch.nn.DataParallel(net, device_ids=list(range(ngpu)))
+        net = DataParallel(net, device_ids=list(range(ngpu)))
     net = net.to(device)
     # Load checkpoint
     print("==> Loading checkpoint...")

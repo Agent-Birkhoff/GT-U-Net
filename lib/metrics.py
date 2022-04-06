@@ -1,18 +1,21 @@
 """
 This part contains functions related to the calculation of performance indicators
 """
-from sklearn.metrics import roc_curve
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import precision_recall_curve
-from sklearn.metrics import f1_score
 import os
-import torch
-from os.path import join
-import numpy as np
 from collections import OrderedDict
+from os.path import join
+
 import matplotlib.pylab as pylab
 import matplotlib.pyplot as plt
+import numpy as np
+import pylab
+from sklearn.metrics import (
+    confusion_matrix,
+    f1_score,
+    precision_recall_curve,
+    roc_auc_score,
+    roc_curve,
+)
 
 params = {
     "legend.fontsize": 13,

@@ -7,6 +7,7 @@ import torch
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
 from torch.cuda.amp.grad_scaler import GradScaler
+from torch.nn.parallel import DataParallel
 
 import models
 from config import parse_args
@@ -16,7 +17,7 @@ from lib.logger import Logger, Print_Logger
 from lib.losses.loss import *
 
 
-def main(use_amp=True):
+def main(use_amp=False):
     setpu_seed(2021)
     args = parse_args()
     save_path = join(args.outf, args.save)
@@ -33,7 +34,7 @@ def main(use_amp=True):
 
     ngpu = 1
     if ngpu > 1:
-        net = torch.nn.DataParallel(net, device_ids=list(range(ngpu)))
+        net = DataParallel(net, device_ids=list(range(ngpu)))
     net = net.to(device)
 
     print("Total number of parameters: " + str(count_parameters(net)))

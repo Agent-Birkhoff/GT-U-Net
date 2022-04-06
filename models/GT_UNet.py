@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import init
 
-
 BATCH_NORM_DECAY = (
     1 - 0.9
 )  # pytorch batch norm `momentum = 1 - counterpart` of tensorflow
@@ -54,8 +53,8 @@ class RelPosSelfAttention(nn.Module):
         super(RelPosSelfAttention, self).__init__()
         self.relative = relative
         self.fold_heads = fold_heads
-        self.rel_emb_w = nn.Parameter(torch.Tensor(2 * w - 1, dim))
-        self.rel_emb_h = nn.Parameter(torch.Tensor(2 * h - 1, dim))
+        self.rel_emb_w = nn.parameter.Parameter(torch.Tensor(2 * w - 1, dim))
+        self.rel_emb_h = nn.parameter.Parameter(torch.Tensor(2 * h - 1, dim))
 
         nn.init.normal_(self.rel_emb_w, std=dim ** -0.5)
         nn.init.normal_(self.rel_emb_h, std=dim ** -0.5)
@@ -120,8 +119,8 @@ class AbsPosSelfAttention(nn.Module):
         self.absolute = absolute
         self.fold_heads = fold_heads
 
-        self.emb_w = nn.Parameter(torch.Tensor(W, dkh))
-        self.emb_h = nn.Parameter(torch.Tensor(H, dkh))
+        self.emb_w = nn.parameter.Parameter(torch.Tensor(W, dkh))
+        self.emb_h = nn.parameter.Parameter(torch.Tensor(H, dkh))
         nn.init.normal_(self.emb_w, dkh ** -0.5)
         nn.init.normal_(self.emb_h, dkh ** -0.5)
 
@@ -158,7 +157,9 @@ class GroupPointWise(nn.Module):
             proj_channels = target_dimension // proj_factor
         else:
             proj_channels = in_channels // proj_factor
-        self.w = nn.Parameter(torch.Tensor(in_channels, heads, proj_channels // heads))
+        self.w = nn.parameter.Parameter(
+            torch.Tensor(in_channels, heads, proj_channels // heads)
+        )
 
         nn.init.normal_(self.w, std=0.01)
 
